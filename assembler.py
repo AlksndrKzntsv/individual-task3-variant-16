@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+"""
+Ассемблер УВМ - преобразует YAML программу в промежуточное представление
+"""
+
+import yaml
+from typing import List, Dict, Any
+
+class Assembler:
+    """Ассемблер для Учебной Виртуальной Машины"""
+    
+    # Коды операций из спецификации
+    OPCODES = {
+        "LOAD": 40,   # Загрузка константы
+        "READ": 31,   # Чтение из памяти
+        "WRITE": 9,   # Запись в память
+        "NOT": 19,    # Логическое НЕ
+    }
+    
+    def __init__(self):
+        self.intermediate_code = []
+    
+    def assemble(self, input_file: str) -> List[Dict[str, Any]]:
+        """
+        Ассемблирует YAML программу в промежуточное представление
+        
+        Args:
+            input_file: Путь к YAML файлу
+            
+        Returns:
+            List[Dict]: Промежуточное представление команд
+        """
+        print(f"📖 Чтение файла: {input_file}")
+        
+        try:
+            # Загружаем YAML
+            with open(input_file, 'r', encoding='utf-8') as f:
+                program_data = yaml.safe_load(f)
+            
+            print(f"📄 Загружено YAML данных")
+            
+            if not program_data:
+                raise ValueError("YAML файл пуст")
+            
+            if 'program' not in program_data:
+                raise ValueError("YAML файл должен содержать ключ 'program'")
+            
+            self.intermediate_code = []
+            
+            # Обрабатываем каждую команду
+            for i, cmd_dict in enumerate(program_data['program']):
+                print(f"  🔨 Обработка команды {i}: {cmd_dict}")
+                intermediate_cmd = self._parse_command(cmd_dict, i)
+                self.intermediate_code.append(intermediate_cmd)
+            
+            return self.intermediate_code
+            
+        except yaml.YAMLError as e:
+            raise ValueError(f"Ошибка парсинга YAML: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Ошибка ассемблирования: {e}")
+    
+    def _parse_command(self, cmd_dict: Dict, line_num: int) -> Dict[str, Any]:
+        """
+        Парсит одну команду из YAML в промежуточное представление
+        """
+        if 'command' not in cmd_dict:
+            raise ValueError(f"Строка {line_num}: отсутствует ключ 'command'")
+        
+        command = cmd_dict['command'].upper()
+        
+        if command not in self.OPCODES:
+            raise ValueError(f"Строка {line_num}: неизвестная команда '{command}'")
+        
+        opcode = self.OPCODES[command]
+        intermediate = {"opcode": opcode, "command": command}
+        
+        # Проверяем аргументы в зависимости от команды
+        if command == "LOAD":
+            if 'value' not in cmd_dict:
+                raise ValueError(f"Строка {line_num}: команда LOAD требует значение 'value'")
+            intermediate['value'] = cmd_dict['value']
+            
+        elif command in ["WRITE", "NOT"]:
+            if 'address' not in cmd_dict:
+                raise ValueError(f"Строка {line_num}: команда {command} требует адрес 'address'")
+            intermediate['address'] = cmd_dict['address']
+            
+        elif command == "READ":
+            # READ не требует аргументов
+            pass
+        
+        return intermediate
+    
+    def _parse_command_test(self, cmd_dict: Dict, line_num: int) -> Dict[str, Any]:
+        """Тестовая версия для демонстрации (без изменения YAML)"""
+        return self._parse_command(cmd_dict, line_num)
+    
+    def get_intermediate_code(self) -> List[Dict[str, Any]]:
+        """Возвращает промежуточное представление"""
+        return self.intermediate_code

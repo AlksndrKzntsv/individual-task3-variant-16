@@ -1,0 +1,18 @@
+# Тестовая программа для УВМ
+# Команды из спецификации
+
+program:
+  # Тест 1: LOAD 569 (A=40, B=569) → 0x68 0x8E 0x00 0x00
+  - command: "LOAD"
+    value: 569
+  
+  # Тест 2: READ (A=31) → 0x1F 0x00 0x00 0x00
+  - command: "READ"
+  
+  # Тест 3: WRITE 399 (A=9, B=399) → 0x69 0x63 0x00 0x00
+  - command: "WRITE"
+    address: 399
+  
+  # Тест 4: NOT 887 (A=19, B=887) → 0xD3 0xD0 0x00 0x00
+  - command: "NOT"
+    address: 887
